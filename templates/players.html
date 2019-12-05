@@ -11,9 +11,11 @@
 </form>
 
 <div id="display">
-  {% for data in data %}
-  <li>{{data[1], data[2], data[3], data[4], data[5]}}</li>
-  {% endfor %}
+  <p>Name: {{fn}}   {{ln}}</p>
+  <p>Birthdate: {{bd}}</p>
+  <p>Country: {{country}}</p>
+  <p>Grand Slams won: {{gwon}}</p>
+  <p>Masters won: {{mwon}}</p>
 </div>
 
 {% endblock %}
