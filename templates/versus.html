@@ -1,0 +1,58 @@
+
+{% extends "base.html" %}
+
+{% block title %} Versus Page {% endblock %}
+
+{% block content %}
+
+<style type='text/css'>
+
+  body {
+      background-color:#CCCCCC;
+ }
+
+ .button-container form{
+   display:inline-block;
+   margin-left:40px;
+   font-size: 1rem;
+}
+h2{
+  margin-left:40px;
+}
+.display{
+  margin-left:40px;
+  float:left;
+}
+
+
+</style>
+
+<h2>Player 1: </h2>
+<div class="button-container">
+    <form action="#" method="POST" enctype="multipart/form-data">
+      <p> First Name: </p>
+      <p><input type="text" name="fn"/></p>
+      <p> Last Name: </p>
+      <p><input type="text" name="ln"/></p>
+    </form>
+
+    <h2>Player 2: </h2>
+    <form action="#" method="POST" enctype="multipart/form-data">
+      <p> First Name: </p>
+      <p><input type="text" name="fn"/></p>
+      <p> Last Name: </p>
+      <p><input type="text" name="ln"/></p>
+      <p><input type="submit" value="submit"/></p>
+    </form>
+</div>
+
+<div class ="display">
+  <p>Name: {{fn}}   {{ln}}</p>
+  <p>Birthdate: {{bd}}</p>
+  <p>Country: {{country}}</p>
+  <p>Grand Slams won: {{gwon}}</p>
+  <p>Masters won: {{mwon}}</p>
+  </div>
+
+
+{% endblock %}
