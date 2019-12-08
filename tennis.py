@@ -78,50 +78,69 @@ def versus():
     fn2 =''
     ln1=''
     ln2=''
-    playerID=[]
+    player1ID=[]
+    player2ID=[]
+    graph_data =[]
+
     if request.method == 'GET':
+
         print("here")
+        fn1 = request.args.get('fn1')
+        ln1 = request.args.get('ln1')
+        fn2 = request.args.get('fn2')
+        ln2 = request.args.get('ln2')
+
         if (fn1 is not None and fn2 is not None):
             print(fn1)
-            print("now here")
+            print(fn2)
 
-            fn1 = request.args.get('fn1')
-            ln1 = request.args.get('ln1')
-            fn2 = request.args.get('fn2')
-            ln2 = request.args.get('ln2')
-            print(fn1)
-            query = "select MIN(p_playerID) from players where p_firstName = '%s' AND p_lastName = '%s';"%(fn1, ln1)
+            getp1 = "select MIN(p_playerID) from players where p_firstName = '%s' AND p_lastName = '%s';"%(fn1, ln1)
 
             conn =create_connection()
             crs = conn.cursor()
 
-            playerID = crs.execute(query).fetchone()
+            player1ID = crs.execute(getp1).fetchone()
 
-            query2 = "select T.t_surface, COUNT(A.v_wID) from allTournaments A, tournaments T where A.v_wID = %d AND T.t_ID = A.v_ID group by T.t_surface;"%(int(playerID[0]))
-            results2 = crs.execute(query2)
-            surfacedata = [[str(item) for item in results] for results in crs.fetchall()]
-            for sd in surfacedata:
-                print(sd)
+            #if(playerID is not None):
+            #query2 = "select T.t_surface, COUNT(A.v_wID) from allTournaments A, tournaments T where A.v_wID = %d AND T.t_ID = A.v_ID group by T.t_surface;"%(int(playerID[0]))
+            #results2 = crs.execute(query2)
+            #surfacedata = [[str(item) for item in results] for results in crs.fetchall()]
+            #for sd in surfacedata:
+            #    print(sd)
 
 
-            #for player 2
-
-            query = "select MIN(p_playerID) from players where p_firstName = '%s' AND p_lastName = '%s';"%(fn2, ln2)
+            getp2 = "select MIN(p_playerID) from players where p_firstName = '%s' AND p_lastName = '%s';"%(fn2, ln2)
 
             conn =create_connection()
             crs = conn.cursor()
-
-            playerID = crs.execute(query).fetchone()
-
-            query2 = "select T.t_surface, COUNT(A.v_wID) from allTournaments A, tournaments T where A.v_wID = %d AND T.t_ID = A.v_ID group by T.t_surface;"%(int(playerID[0]))
-            results2 = crs.execute(query2)
-            surfacedata = [[str(item) for item in results] for results in crs.fetchall()]
-            for sd in surfacedata:
-                print(sd[1])
+            player2ID = crs.execute(getp2).fetchone()
 
 
+            versusquery = "select R.playerID as p1, R.wins as p1won, T.p2, T.p2wins from (select A.v_wID as playerID, COUNT(A.v_wID) as wins from allTournaments A where A.v_wID = %d AND A.v_lID = %d) R,(select A.v_wID as p2, COUNT(A.v_wID) as p2wins from allTournaments A where A.v_wID = %d AND A.v_lID = %d)T;"%(int(player1ID[0]), int(player2ID[0]), int(player2ID[0]), int(player1ID[0]))
+            res = crs.execute(versusquery).fetchone()
 
-    return render_template('versus.html', fn1=fn1, fn2=fn2)
+            print("results" )
+            print(res)
+            pie_chart = pygal.Pie()
+            if (res[1] == 0 and res[3] == 0):
+                print("TNEVNW;AEONEV;OIAWNO;EVIAN")
+                pie_chart.title = 'never played in the last 10 years'
+            else:
+                pie_chart.title = 'player 1 vs player 2'
+            p1 = fn1 + ' ' + ln1
+            p2 = fn2 + ' ' + ln2
+            pie_chart.add(p1, int(res[1]))
+            pie_chart.add(p2, int(res[3]))
+
+            pie_chart.render()
+
+            graph_data = pie_chart.render_data_uri()
+
+        else:
+            graph_data = 'https://i.pinimg.com/564x/30/62/75/3062756a297f1e3c22e35f3fe89b3ecc.jpg'
+
+
+    return render_template('versus.html', fn1=fn1, fn2=fn2, graph_data=graph_data)
 
 @app.route('/players', methods=['GET'])
 def players():
@@ -142,7 +161,10 @@ def players():
         d1=[]
         d2=[]
         d3=[]
-
+        graph_data=[]
+        tarr=[]
+        minyear = 0
+        maxyear = 0
 
         fn = request.args.get('fn')
         ln = request.args.get('ln')
@@ -185,7 +207,7 @@ def players():
 
             surfacedata = [[str(item) for item in results] for results in crs.fetchall()]
             for sd in surfacedata:
-                #sdata.append(sd[1])
+                tarr.append(sd[0])
                 if sd[1] == 'Clay':
                     d1.append(int(sd[2]))
                 elif sd[1] == 'Grass':
@@ -193,41 +215,48 @@ def players():
                 elif sd[1] == 'Hard':
                     d3.append(int(sd[2]))
 
+            #for range of years in graph data
+            minyear = min(tarr)
+            maxyear = str(int(max(tarr)) + 1)
 
-            print(d1)
-            print(d2)
-            print(d3)
-
-            close_connection(conn)
+            #retrieve strings to display
             s = data[0]
-            print(s)
             li = str(s).strip(']').split(", ")
             fn =li[1]
             ln = li[2]
             bd=li[3]
             country=li[5]
 
-            #plotbar()
+            #graph to display
+    	    graph_data = getbardata(d1, d2, d3, minyear, maxyear)
 
-
-    	    graph_data = getbardata(d1, d2, d3)
+            close_connection(conn)
 
         else:
             fn = 'hello'
             ln = 'there'
+            graph_data = 'https://i.pinimg.com/564x/30/62/75/3062756a297f1e3c22e35f3fe89b3ecc.jpg'
     return render_template('players.html', fn=fn, ln=ln, bd=bd,country=country, gwon=gwon, mwon=mwon, graph_data=graph_data)
 
-def getbardata(d1, d2, d3):
+def getbardata(d1, d2, d3, minyear, maxyear):
+    years =[]
+    print("minyear and max")
+    print(minyear)
+    print(maxyear)
+    for i in range(int(minyear), int(maxyear)):
+        print("year:")
+        print(i)
+        years.append(i)
     line_chart = pygal.Bar()
     line_chart.title = 'Wins based on surface'
-    line_chart.x_labels = map(str, range(2010, 2020))
+    #line_chart.x_labels = map(str, range(int(minyear), int(maxyear)))
+    line_chart.x_labels = map(str, years)
+
     line_chart.add('Clay', d1)
     line_chart.add('Grass', d2)
     line_chart.add('Hard', d3)
     line_chart.render()
     return line_chart.render_data_uri()
-
-
 
 def create_connection():
     conn = None
@@ -236,7 +265,6 @@ def create_connection():
     except Error as e:
         print(e)
     return conn
-
 
 def execute_query(query):
     if query == '' : return
@@ -257,13 +285,6 @@ def execute_query(query):
 def close_connection(db):
     if db is not None:
         db.close()
-
-def plot():
-    bar_chart = pygal.Bar()                                            # Then create a bar graph object
-    bar_chart.add('Fibonacci', [0, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55])  # Add some values
-    bar_chart.render_to_file('bar_chart.svg')
-    b_data = bar_chart.render_data_uri()
-    return render_template("players.html", url = b_data)
 
 def main():
     print("python main function")
