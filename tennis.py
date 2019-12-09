@@ -238,6 +238,37 @@ def players():
             graph_data = 'https://i.pinimg.com/564x/30/62/75/3062756a297f1e3c22e35f3fe89b3ecc.jpg'
     return render_template('players.html', fn=fn, ln=ln, bd=bd,country=country, gwon=gwon, mwon=mwon, graph_data=graph_data)
 
+@app.route('/insert', methods=['GET','POST'])
+def insert():
+    print("here")
+    name = []
+    year =[]
+    surface =[]
+    bestof=[]
+    level=[]
+    insertc=''
+    if request.method == 'POST':
+
+        name = request.form.getlist('name')
+        year = request.form.getlist('year')
+        surface = request.form.getlist('surface')
+        bestof = request.form.getlist('bestof')
+        level = request.form.getlist('level')
+
+        if (name is not None and year is not None):
+
+            id = str(name[0]) + str(year[0])
+            insert = "insert into tournaments values('%s', '%s', '%s', '%s', %d, '%s');"%(str(id), str(name[0]), str(year[0]), str(surface[0]), int(bestof[0]), str(level[0]))
+            conn =create_connection()
+            crs = conn.cursor()
+            print(insert)
+            crs.execute(insert)
+            conn.commit()
+            print("inserted!")
+
+            insertc = 'INSERTED ' + str(name[0]) + '!'
+    return render_template('insert.html', inserted=insertc)
+
 def getbardata(d1, d2, d3, minyear, maxyear):
     years =[]
     print("minyear and max")

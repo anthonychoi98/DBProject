@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %} Players Page {% endblock %}
+{% block content %}
+<style type='text/css'>
+
+  body {
+      background-color:#CCCCCC;
+ }
+ .button-container form{
+   display:inline-block;
+   margin-left:40px;
+   font-size: 1rem;
+  }
+  h2{
+    margin-left:40px;
+  }
+  .display{
+    margin-left:40px;
+    float:left;
+    font-size:40px !important;
+  }
+</style>
+<div class="button-container">
+  <h2>Insert Tournament</h2>
+  <form action="/insert" method="POST" enctype="multipart/form-data">
+    <p> Name: </p>
+    <p><input type="text" name="name"/></p>
+    <p> Year: </p>
+    <p><input type="text" name="year"/></p>
+    <p> Surface: </p>
+    <p><input type="text" name="surface"/></p>
+    <p> BestOf: </p>
+    <p><input type="text" name="bestof"/></p>
+    <p> Level: </p>
+    <p><input type="text" name="level"/></p>
+    <p><input type="submit" value="submit"/></p>
+  </form>
+</div>
+
+<div class="display">
+  <p style="font-size:25px">{{inserted}}</p>
+</div>
+
+{% endblock %}
