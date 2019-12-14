@@ -1,0 +1,272 @@
+﻿Phase 2 Queries:
+
+
+
+
+
+
+1. How many tournaments are best of 5:
+
+
+select COUNT(t_ID)
+from tournaments
+where t_bestOf = 5;
+
+
+2. How many wins in total in total has JAPAN accumulated(JPN)
+
+
+select COUNT(v_ID)
+from allTournaments
+where v_wCountry = 'JPN';
+
+
+
+
+3. How many matches has Djokovic won in the last 10 years, and how many has he lost?
+
+
+select COUNT(V.v_lID) as losses, R.wins
+from allTournaments V, (select COUNT(v_wID) as wins, v_wID as wid
+                       from allTournaments
+                       where v_wID =
+                                   (select p_playerID
+                                   from players
+                                   where p_firstName = 'Novak' AND p_lastName = 'Djokovic'))R
+where V.v_lID = R.wid;
+
+
+
+
+4. Which USA player had the highest ranking in 2010
+
+
+select p_firstName, p_lastName, MIN(pr_rank)
+from playerRanks2015, players
+where pr_playerID = p_playerID AND p_country = 'USA';
+
+
+
+
+
+
+
+
+
+
+
+
+5. How many 'otherEvents' has Nadal won since 2010? (otherEvents = non slams/masters/final)
+
+
+select COUNT(o_wID)
+from otherEvents O,(select p_playerID as pid
+from players
+where p_firstName = 'Rafael' AND p_lastName = 'Nadal' AND p_country = 'ESP')R
+where O.o_wID = R.pid AND O.o_round = 'F';
+
+
+6. Insert final match for 2019 ROLAND GARROS
+
+
+INSERT INTO grandSlams(gs_ID, gs_name, gs_matchID, gs_wID, gs_score, gs_round, gs_wCountry, gs_lID, gs_lCountry)
+VALUES ('2019-600', 'Roland Garros', 190, 104745, '6-3, 5-7, 6-1, 6-1', 'F', 'ESP', 106233, 'AUT');
+
+
+
+
+7. Update where it says roland garros to French Open
+
+
+UPDATE grandSlams
+SET gs_name = 'French Open'
+WHERE gs_name = 'Roland Garros';
+
+
+8. Delete Brisbane 2018
+
+
+DELETE from otherEvents
+WHERE o_name = 'Brisbane' AND o_ID LIKE '2018%';
+
+
+
+
+
+
+9. Insert Indian Wells Masters 2020
+insert into tournaments values('indian wells masters2020', 'indian wells masters', '2020', 'Hard', 3, 'M');
+
+
+
+
+10. Get how two players match up against each other
+select R.playerID as p1, R.wins as p1won, T.p2, T.p2wins
+from (select A.v_wID as playerID, COUNT(A.v_wID) as wins
+      from allTournaments A where A.v_wID = %d AND A.v_lID = %d) R,
+      (select A.v_wID as p2, COUNT(A.v_wID) as p2wins
+      from allTournaments A where A.v_wID = (select MIN(p_playerID) from players where p_firstName = '%s' AND p_lastName = '%s';) 
+      AND A.v_lID = (select MIN(p_playerID) from players where p_firstName = '%s' AND p_lastName = '%s';))T;
+
+
+11. How many wimbledon finals has federer played in the last 10 years
+select SUM(count)
+from (select COUNT(G.gs_lID) as count
+from grandSlams G, (select p_playerID as id
+                   from players
+                   where p_firstName = 'Roger' AND p_lastName = 'Federer'
+                   AND p_country = 'SUI')R
+where G.gs_name = 'Wimbledon' AND G.gs_lID = R.id AND G.gs_round = 'F'
+
+
+UNION ALL
+
+
+select COUNT(gs_wID)
+from grandSlams, (select p_playerID as id
+                   from players
+                   where p_firstName = 'Roger' AND p_lastName = 'Federer'
+                   AND p_country = 'SUI')R
+where gs_name = 'Wimbledon' AND gs_wID = R.id AND gs_round = 'F')R;
+
+
+
+
+12. How many more spanish players are there than USA players in 2018
+
+
+select R1.count - R2.count
+from (select COUNT(pr_playerID) as count, p_country as country
+from playerRanks2018, players
+where pr_date = '2018-03-19' AND p_playerID = pr_playerID
+AND p_country = 'ESP' AND pr_rank < 50)R1, (select COUNT(pr_playerID) as count, p_country
+from playerRanks2018, players
+where pr_date = '2018-03-19' AND p_playerID = pr_playerID
+AND p_country = 'USA' AND pr_rank < 50)R2;
+
+
+
+
+
+
+
+
+
+
+13. In 2019, what is the sum of the top three player's points
+
+
+
+
+select SUM(pr_points)
+from playerRanks2019
+where pr_date = '2019-02-25' AND pr_rank IN (1, 2, 3);
+
+
+
+
+
+
+
+
+14. How many hard surface otherEvents, clay, and grass?
+
+
+select COUNT(DISTINCT(t_name)), t_surface
+from tournaments,
+(select o_ID as mid
+from otherEvents)R
+where R.mid = t_ID
+group by t_surface;
+
+
+
+
+15. How many players are 21?
+
+
+select COUNT(R.age)
+from (SELECT DISTINCT(p_playerID) as pid, (strftime('%Y', 'now') - strftime('%Y', p_birthdate))
+    - (strftime('%m-%d', 'now') < strftime('%m-%d', p_birthdate) ) as age
+    from players)R
+    where R.age = 21
+;
+
+
+16. How many times has roger beat nadal and vice versa in the last 10 years
+select R.count as RogerWon, T.count RafaWon
+from
+(select COUNT(v_ID) as count
+from allTournaments
+where v_wID = (select p_playerID
+from players
+where p_firstName = 'Roger' AND p_lastName = 'Federer' AND p_country = 'SUI')
+AND v_lID = (select p_playerID
+from players
+where p_firstName = 'Rafael' AND p_lastName = 'Nadal' AND p_country = 'ESP'))R,
+
+
+(select COUNT(v_ID) as count
+from allTournaments
+where v_wID = (select p_playerID
+from players
+where p_firstName = 'Rafael' AND p_lastName = 'Nadal' AND p_country = 'ESP')
+AND v_lID = (select p_playerID
+from players
+where p_firstName = 'Roger' AND p_lastName = 'Federer' AND p_country = 'SUI'))T
+;
+
+
+17. How many matches has Roland Garros had in the last 10 years.
+
+
+select COUNT(v_name)
+from allTournaments
+where v_name = 'Roland Garros';
+
+
+18. Create view for all the tournaments together
+CREATE VIEW allTournaments AS(
+select gs_ID as v_ID, gs_name as v_name, gs_matchID as v_matchID, gs_wID as v_wID, gs_score as v_score, gs_wCountry as v_wCountry, gs_lID as v_lID, gs_lCountry as v_lCountry
+from grandSlams
+
+
+UNION ALL
+
+
+select m_ID, m_name, m_matchID, m_wID, m_score, m_wCountry, m_lID, m_lCountry
+from masters
+
+
+UNION ALL
+
+
+select o_ID, o_name, o_matchID, o_wID, o_score, o_wCountry, o_lID, o_lCountry
+from otherEvents
+
+
+UNION ALL
+
+
+select f_ID, f_name, f_matchID, f_wID, f_score, f_wCountry, f_lID, f_lCountry
+from tourFinals)
+
+
+19. What was Djokovics rank on 2010-12-27
+
+
+select pr_rank
+from playerRanks2010
+where pr_playerID = (
+select p_playerID
+from players
+where p_firstName = 'Novak' and p_lastName = 'Djokovic')
+AND pr_date = '2010-12-27';
+
+
+20. What korean players have played and are right handed?
+
+
+select  p_firstName, p_lastName
+from players
+where p_country = 'KOR' AND p_handedness = 'R';
